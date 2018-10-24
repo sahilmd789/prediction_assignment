@@ -1,0 +1,76 @@
+---
+title: "Human activity analysis"
+author: "Sahil"
+date: "24-oct"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Overview
+In this project, my goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: (http://groupware.les.inf.puc-rio.br/har).
+
+# Getting Data
+
+```{r getting_data}
+dtrain <- read.csv("C:/Users/sahil/Documents/pml-training.csv")
+dtest <- read.csv("C:/Users/sahil/Documents/pml-testing.csv")
+```
+
+# Cleaning Data
+As we can observe the data has a lot of columns having NA values and blank data. Let us remove these columns first.
+```{r cleaning_data}
+# Removing columns with blank values and NA values
+r <- which(sapply(dtrain, function(x){sum(x=="")==0}))
+dtrain <- dtrain[,r]
+r <- which(sapply(dtest, function(x){sum(x=="")==0}))
+dtest <- dtest[,r]
+```
+
+Now we should also remove the unimportant columns. The first 7 columns of the data frame would not help in a qualitative analysis.
+
+```{r cleaning_data2}
+imp_col <- c(8:dim(dtrain)[2])
+dtrain <- dtrain[,imp_col]
+dtest <- dtest[,imp_col]
+```
+
+Now let us convert the classes column as factor variables.
+
+```{r cleaning_data3}
+dtrain$classe <- as.factor(dtrain$classe)
+```
+
+# Cross Validation
+
+```{r cross_validation}
+library("caret")
+intrain <- createDataPartition(dtrain$classe, p=0.60)
+dcv <- dtrain[-intrain[[1]],]
+dtraining <- dtrain[intrain[[1]],]
+```
+
+# Model Selection
+Before doing any exploratory data analysis let us first apply certain models to see how they perform.
+Let us apply a random forest model.
+
+```{r model_selection}
+library("randomForest")
+rf_fit <- randomForest(classe~., data=dtraining, ntree=100,
+                       do.Trace=T)
+rf_fit
+```
+
+As we can see the error rate is less than 1%, we will stick with this model.
+
+# Prediction
+```{r}
+pred <- predict(rf_fit, dtest)
+print(pred)
+```
+
+# Conclusion
+
+Hence, we have used a random forest model, after certain data cleaning to construct our predictor.
